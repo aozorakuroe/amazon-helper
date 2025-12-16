@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Amazon出品補助ツール</title>
+</head>
+<body>
+  <h2>CSVからAmazon出品フォーム自動入力</h2>
+
+  <input type="file" id="csvFile" accept=".csv">
+  <button id="loadBtn">CSV読み込み</button>
+
+  <pre id="log"></pre>
+
+  <script>
+    document.getElementById('loadBtn').addEventListener('click', () => {
+      const fileInput = document.getElementById('csvFile');
+      const file = fileInput.files[0];
+      if (!file) {
+        alert("CSVを選択してください");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const rows = text.trim().split("\n");
+        rows.forEach((row, index) => {
+          const [jan, price, condition, shipping] = row.split(",");
+          // ログ表示（確認用）
+          document.getElementById('log').textContent += `行${index+1}: ${jan}, ${price}, ${condition}, ${shipping}\n`;
+
+          // Amazon出品フォームに自動入力（要ページID調整）
+          // document.querySelector("#product-id-field").value = jan;
+          // document.querySelector("#price-field").value = price;
+          // document.querySelector("#condition-select").value = condition;
+          // document.querySelector("#shipping-field").value = shipping;
+        });
+        alert("CSV読み込み完了。最後に出品ボタンを押してください。");
+      };
+      reader.readAsText(file, "UTF-8");
+    });
+  </script>
+</body>
+</html>
