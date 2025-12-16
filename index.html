@@ -3,43 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <title>Amazon出品補助ツール</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 </head>
 <body>
-  <h2>CSVからAmazon出品フォーム自動入力</h2>
+  <h2>CSV + 画像からAmazon出品フォーム自動入力</h2>
 
   <input type="file" id="csvFile" accept=".csv">
-  <button id="loadBtn">CSV読み込み</button>
+  <button id="loadCsvBtn">CSV読み込み</button>
+  <br><br>
+
+  <input type="file" id="imageFile" accept="image/*">
+  <button id="readImageBtn">画像からJANコード読み取り</button>
+  <br><br>
 
   <pre id="log"></pre>
 
   <script>
-    document.getElementById('loadBtn').addEventListener('click', () => {
-      const fileInput = document.getElementById('csvFile');
-      const file = fileInput.files[0];
-      if (!file) {
-        alert("CSVを選択してください");
-        return;
-      }
+    let csvData = [];
+
+    // CSV読み込み
+    document.getElementById('loadCsvBtn').addEventListener('click', () => {
+      const file = document.getElementById('csvFile').files[0];
+      if (!file) { alert("CSVを選択してください"); return; }
 
       const reader = new FileReader();
       reader.onload = function(e) {
-        const text = e.target.result;
-        const rows = text.trim().split("\n");
-        rows.forEach((row, index) => {
+        const rows = e.target.result.trim().split("\n");
+        csvData = rows.map(row => {
           const [jan, price, condition, shipping] = row.split(",");
-          // ログ表示（確認用）
-          document.getElementById('log').textContent += `行${index+1}: ${jan}, ${price}, ${condition}, ${shipping}\n`;
-
-          // Amazon出品フォームに自動入力（要ページID調整）
-          // document.querySelector("#product-id-field").value = jan;
-          // document.querySelector("#price-field").value = price;
-          // document.querySelector("#condition-select").value = condition;
-          // document.querySelector("#shipping-field").value = shipping;
+          document.getElementById('log').textContent += `CSV: ${jan}, ${price}, ${condition}, ${shipping}\n`;
+          return {jan, price, condition, shipping};
         });
-        alert("CSV読み込み完了。最後に出品ボタンを押してください。");
       };
       reader.readAsText(file, "UTF-8");
     });
-  </script>
-</body>
-</html>
+
+    // 画像からJANコード読み取り
+    document.getElementById('readImageBtn').addEventListener('click', () => {
+      const file = document.getElementById('imageFile').files[0];
+      if (!file) { alert("画像を選択してください"); return; }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = function() {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          ctx.
