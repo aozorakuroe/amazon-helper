@@ -62,10 +62,11 @@
             decoder: {readers:["ean_reader"]}
           }, function(result){
             if(result && result.codeResult){
-              const jan = result.codeResult.code;
+              // JANコードを文字列として扱う（先頭に'を付けてExcelで数字化を防ぐ）
+              const jan = "'" + result.codeResult.code;
               document.getElementById('log').textContent = `読み取ったJANコード: ${jan}\n`;
 
-              // CSV作成（BOM付きUTF-8で文字化け対策）
+              // CSV作成（BOM付きUTF-8で文字化け防止）
               let csvContent = "JANコード,価格,コンディション,発送方法\n";
               csvContent += `${jan},${price},${condition},${shipping}\n`;
 
