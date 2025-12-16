@@ -5,25 +5,30 @@
   <title>画像からCSV作成（単一画像）</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
   <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
     body {
       display: flex;
       flex-direction: column;
       align-items: center;       /* 横方向中央 */
       justify-content: center;   /* 縦方向中央 */
-      height: 100vh;             /* 画面全体の高さ */
-      font-family: Arial, sans-serif;
       text-align: center;
     }
     input, button, a {
       margin: 10px;
       padding: 10px 20px;
       font-size: 16px;
+      cursor: pointer;
     }
     pre {
       background-color: #f0f0f0;
       padding: 10px;
       width: 80%;
       overflow-x: auto;
+      text-align: left;
     }
   </style>
 </head>
@@ -60,11 +65,11 @@
               const jan = result.codeResult.code;
               document.getElementById('log').textContent = `読み取ったJANコード: ${jan}\n`;
 
-              // CSV作成
+              // CSV作成（BOM付きUTF-8で文字化け対策）
               let csvContent = "JANコード,価格,コンディション,発送方法\n";
               csvContent += `${jan},${price},${condition},${shipping}\n`;
 
-              const blob = new Blob([csvContent], {type: "text/csv"});
+              const blob = new Blob(["\uFEFF" + csvContent], {type: "text/csv;charset=utf-8"});
               const url = URL.createObjectURL(blob);
               const link = document.getElementById("downloadLink");
               link.href = url;
