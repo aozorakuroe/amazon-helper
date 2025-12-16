@@ -52,4 +52,40 @@
           canvas.width = img.width;
           canvas.height = img.height;
           const ctx = canvas.getContext("2d");
-          ctx.
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+
+          Quagga.decodeSingle({
+            src: img.src,
+            numOfWorkers: 0,
+            inputStream: { size: 800 },
+            decoder: { readers: ["ean_reader"] } // JAN/EANコード
+          }, function(result) {
+            if(result && result.codeResult) {
+              const jan = result.codeResult.code;
+              const price = 100;
+              const condition = "中古可";
+              const shipping = "本の配送方法";
+              csvData.push({jan, price, condition, shipping});
+              document.getElementById('log').textContent += `画像読み取り: ${jan}\n`;
+            } else {
+              alert("バーコードが読み取れませんでした");
+            }
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // 自動入力（Amazon出品ページ用）
+    function fillAmazonForm() {
+      csvData.forEach(item => {
+        document.querySelector("#product-id-field").value = item.jan;
+        document.querySelector("#price-field").value = item.price;
+        document.querySelector("#condition-select").value = item.condition;
+        document.querySelector("#shipping-field").value = item.shipping;
+      });
+      alert("入力完了。最後に出品ボタンを押してください。");
+    }
+  </script>
+</body>
+</html>
