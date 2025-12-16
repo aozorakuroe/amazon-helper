@@ -2,15 +2,37 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>画像からCSV作成</title>
+  <title>画像からCSV作成（単一画像）</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;       /* 横方向中央 */
+      justify-content: center;   /* 縦方向中央 */
+      height: 100vh;             /* 画面全体の高さ */
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    input, button, a {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    pre {
+      background-color: #f0f0f0;
+      padding: 10px;
+      width: 80%;
+      overflow-x: auto;
+    }
+  </style>
 </head>
 <body>
-  <h2>画像からCSV作成（JANコード取得）</h2>
+  <h2>画像からCSV作成（単一画像）</h2>
 
-  <input type="file" id="imageFile" accept="image/*" multiple>
-  <button id="readImagesBtn">画像読み取り & CSV作成</button>
-  <br><br>
+  <input type="file" id="imageFile" accept="image/*">
+  <button id="readImageBtn">画像読み取り & CSV作成</button>
+  <br>
   <a id="downloadLink" style="display:none;">CSVをダウンロード</a>
   <pre id="log"></pre>
 
@@ -18,57 +40,44 @@
     const price = 100;
     const condition = "中古可";
     const shipping = "本の配送方法";
-    let csvData = [];
 
-    document.getElementById('readImagesBtn').addEventListener('click', () => {
-      const files = document.getElementById('imageFile').files;
-      if(files.length === 0){ alert("画像を選択してください"); return; }
+    document.getElementById('readImageBtn').addEventListener('click', () => {
+      const file = document.getElementById('imageFile').files[0];
+      if(!file){ alert("画像を選択してください"); return; }
 
-      csvData = [];
-      document.getElementById('log').textContent = "";
+      const reader = new FileReader();
+      reader.onload = function(e){
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = function(){
+          Quagga.decodeSingle({
+            src: img.src,
+            numOfWorkers:0,
+            inputStream: {size:800},
+            decoder: {readers:["ean_reader"]}
+          }, function(result){
+            if(result && result.codeResult){
+              const jan = result.codeResult.code;
+              document.getElementById('log').textContent = `読み取ったJANコード: ${jan}\n`;
 
-      let processed = 0;
+              // CSV作成
+              let csvContent = "JANコード,価格,コンディション,発送方法\n";
+              csvContent += `${jan},${price},${condition},${shipping}\n`;
 
-      for(let i=0; i<files.length; i++){
-        const file = files[i];
-        const reader = new FileReader();
-        reader.onload = function(e){
-          const img = new Image();
-          img.src = e.target.result;
-          img.onload = function(){
-            Quagga.decodeSingle({
-              src: img.src,
-              numOfWorkers:0,
-              inputStream: {size:800},
-              decoder: {readers:["ean_reader"]}
-            }, function(result){
-              if(result && result.codeResult){
-                const jan = result.codeResult.code;
-                csvData.push([jan, price, condition, shipping]);
-                document.getElementById('log').textContent += `画像${i+1}: ${jan} 取得\n`;
-              } else {
-                document.getElementById('log').textContent += `画像${i+1}: 読み取り失敗\n`;
-              }
-
-              processed++;
-              if(processed === files.length){
-                // CSV作成
-                let csvContent = "JANコード,価格,コンディション,発送方法\n";
-                csvData.forEach(row => csvContent += row.join(",") + "\n");
-
-                const blob = new Blob([csvContent], {type: "text/csv"});
-                const url = URL.createObjectURL(blob);
-                const link = document.getElementById("downloadLink");
-                link.href = url;
-                link.download = "amazon_list.csv";
-                link.style.display = "inline";
-                link.textContent = "CSVをダウンロード";
-              }
-            });
-          }
+              const blob = new Blob([csvContent], {type: "text/csv"});
+              const url = URL.createObjectURL(blob);
+              const link = document.getElementById("downloadLink");
+              link.href = url;
+              link.download = "amazon_list.csv";
+              link.style.display = "inline";
+              link.textContent = "CSVをダウンロード";
+            } else {
+              alert("バーコードが読み取れませんでした");
+            }
+          });
         }
-        reader.readAsDataURL(file);
-      }
+      };
+      reader.readAsDataURL(file);
     });
   </script>
 </body>
